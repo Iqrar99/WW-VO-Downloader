@@ -53,6 +53,10 @@ go run main.go
 
 You will be asked which `.json` file you want to use. Just submit and wait for the program finished. Voice lines will be downloaded into the `voices/` directory.
 
+#### FOR NON DEVELOPER USER
+
+You can download the executable program [here](https://github.com/Iqrar99/WW-VO-Downloader/releases) then put the `.exe` file in the repository after cloning it.
+
 ---
 
 ## 📝 Note for Fandom Contributors
