@@ -1,0 +1,4 @@
+github.com/lib4u/fake-useragent v1.0.4 h1:oL52YTxGe/qt/2uMPqX2JY54wf0igyaGelYy6v0Gfh8=
+github.com/lib4u/fake-useragent v1.0.4/go.mod h1:sRSb/JqjL/SBd3U0m77NF+C9KAlikexeUJY7Q2krPM8=
+golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8 h1:yqrTHse8TCMW1M1ZCP+VAR/l0kKxwaAIqN/il7x4voA=
+golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8/go.mod h1:tujkw807nyEEAamNbDrEGzRav+ilXA7PCRAd6xsmwiU=

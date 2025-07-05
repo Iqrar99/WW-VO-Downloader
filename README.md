@@ -45,9 +45,10 @@ cd WW-VO-Downloader
 
 Make sure you have the latest version of [Go](https://go.dev/doc/install) installed.
 
-Then, run:
+Then, install depedencies and run:
 
 ```bash
+go mod tidy
 go run main.go
 ```
 

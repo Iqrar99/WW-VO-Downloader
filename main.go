@@ -89,6 +89,6 @@ func startInteractiveInput() {
 	case "ZH":
 		languages["Zh"] = true
 	default:
-		log.Fatal("Invalid language choice. Please enter one of: EN, JA, KO, ZH.")
+		log.Fatal("Invalid language choice. Please enter EN, JA, KO, or ZH.")
 	}
 }

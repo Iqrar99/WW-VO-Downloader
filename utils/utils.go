@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	fakeUA "github.com/lib4u/fake-useragent"
 )
 
 var client = &http.Client{
@@ -50,8 +52,8 @@ func composeVoiceFileName(resonator, lang, title string) string {
 	} else {
 		fileName = fmt.Sprintf("%s %s %s", resonator, strings.ToUpper(lang), title)
 	}
-	fileName = strings.Replace(fileName, ":", "", -1)
-	fileName = strings.Replace(fileName, " ", "_", -1)
+	fileName = strings.ReplaceAll(fileName, ":", "")
+	fileName = strings.ReplaceAll(fileName, " ", "_")
 
 	return fileName + ".mp3"
 }
@@ -77,8 +79,19 @@ func DownloadVoiceFile(url, path, resonator, lang, title string) error {
 		return err
 	}
 
+	ua, err := fakeUA.New()
+	if err != nil {
+		return err
+	}
+
 	// Add headers to look like a real browser
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_8_5) Gecko/20100101 Firefox/57.3")
+	req.Header.Set("User-Agent", ua.GetRandom())
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+	req.Header.Set("Accept-Encoding", "gzip, deflate, br")
+	req.Header.Set("Connection", "keep-alive")
+	req.Header.Set("Referer", "https://www.google.com/")
+	req.Header.Set("Upgrade-Insecure-Requests", "1")
 
 	resp, err := client.Do(req)
 	if err != nil {
