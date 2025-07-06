@@ -35,14 +35,18 @@ func main() {
 
 		currPath := "voices/" + resonator + "/" + lang
 		utils.CreateDir(currPath)
-		log.Printf("Processing %s pack\n", strings.ToUpper(lang))
+		if wikiMode {
+			log.Printf("Processing %s pack with WIKI mode on\n", strings.ToUpper(lang))
+		} else {
+			log.Printf("Processing %s pack\n", strings.ToUpper(lang))
+		}
 
 		for _, words := range jsonData["Words"].([]any) {
 			wordMap := words.(map[string]any)
 
 			title := wordMap["Title"].(string)
 			voiceURL := wordMap["Voice"+lang].(string)
-			err := utils.DownloadVoiceFile(voiceURL, currPath, resonator, lang, title)
+			err := utils.DownloadVoiceFile(voiceURL, currPath, resonator, lang, title, wikiMode)
 			if err != nil {
 				log.Println("Error:", err)
 			} else {
