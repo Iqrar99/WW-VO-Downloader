@@ -14,8 +14,36 @@ import (
 	fakeUA "github.com/lib4u/fake-useragent"
 )
 
-var client = &http.Client{
-	Timeout: 30 * time.Second,
+var (
+	client = &http.Client{
+		Timeout: 30 * time.Second,
+	}
+	roman = map[byte]int{
+		'I': 1,
+		'V': 5,
+		'X': 10,
+		'L': 50,
+		'C': 100,
+		'D': 500,
+		'M': 1000,
+	}
+)
+
+// Convert roman numerals into decimal integer
+func romanToInt(s string) int {
+	total := 0
+	prev := 0
+	for i := len(s) - 1; i >= 0; i-- {
+		curr := roman[s[i]]
+		if curr < prev {
+			total -= curr
+		} else {
+			total += curr
+		}
+		prev = curr
+	}
+
+	return total
 }
 
 func ReadJsonFile(jsonFileName string) any {
@@ -43,8 +71,8 @@ func CreateDir(path string) {
 }
 
 // Voice filename is following Fandom WIKI filename format
-func composeVoiceFileName(resonator, lang, title string) string {
-	title = handleTitle(title)
+func composeVoiceFileName(resonator, lang, title string, wikiMode bool) string {
+	title = handleTitle(title, wikiMode)
 
 	var fileName string
 	if lang == "En" {
@@ -59,21 +87,89 @@ func composeVoiceFileName(resonator, lang, title string) string {
 }
 
 // Handle specific title formats
-func handleTitle(title string) string {
-	matched, _ := regexp.MatchString(`.+\'s Hobby`, title)
-	if matched {
+func handleTitle(title string, wikiMode bool) string {
+	if strings.Contains(title, "'s Hobby") {
 		return "Hobby"
 	}
-
-	matched, _ = regexp.MatchString(`.+\'s Trouble`, title)
-	if matched {
+	if strings.Contains(title, "'s Trouble") {
 		return "Trouble"
+	}
+	if wikiMode {
+		title = handleCombatTitle(title)
+	}
+	return title
+}
+
+func handleCombatTitle(title string) string {
+	// Handle very special case
+	if strings.Contains(title, "Intro Skill:") {
+		title = strings.ReplaceAll(title, "Intro Skill:", "Intro & Outro Skills:")
+	}
+
+	soleTitles := []string{
+		"Echo Summon",
+		"Echo Transform",
+		"Intro & Outro Skills",
+		"Enemies Near",
+		"Glider",
+		"Grapple",
+		"Sensor",
+		"Wall Dash",
+		"Dash",
+	}
+	for _, t := range soleTitles {
+		if strings.EqualFold(title, t) {
+			return title + " 01"
+		}
+	}
+
+	nonSoleTitles := []string{
+		"Aerial Attack:",
+		"Basic Attack:",
+		"Heavy Attack:",
+		"Resonance Skill:",
+		"Resonance Liberation:",
+		"Intro & Outro Skills:",
+		"Hit:",
+		"Injured:",
+		"Fallen:",
+		"Supply Chest:",
+		"Echo Summon:",
+		"Echo Transform:",
+		"Enemies Near:",
+	}
+	pattern := regexp.MustCompile(`(.+:\s)([IVXLCDM]+)$`)
+	for _, t := range nonSoleTitles {
+		if strings.Contains(title, t) {
+			return pattern.ReplaceAllStringFunc(title, func(s string) string {
+				matches := pattern.FindStringSubmatch(s)
+				prefix := matches[1]
+				num := romanToInt(matches[2])
+				return prefix + fmt.Sprintf("%02d", num)
+			})
+		}
 	}
 
 	return title
 }
 
-func DownloadVoiceFile(url, path, resonator, lang, title string) error {
+func HandleEmptyInput(input string) {
+	if input == "" {
+		log.Fatal("input can't be empty")
+	}
+}
+
+func HandleYesNoInput(input string, target *bool) {
+	if strings.ToLower(input) == "y" || strings.ToLower(input) == "yes" {
+		*target = true
+	} else if strings.ToLower(input) == "n" || strings.ToLower(input) == "no" {
+		*target = false
+	} else {
+		log.Fatal("Invalid input. Please enter 'y' or 'n'.")
+	}
+}
+
+func DownloadVoiceFile(url, path, resonator, lang, title string, wikiMode bool) error {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err
@@ -103,14 +199,14 @@ func DownloadVoiceFile(url, path, resonator, lang, title string) error {
 	if resp.StatusCode == http.StatusTooManyRequests {
 		log.Println("Rate limited. Waiting before retry...")
 		time.Sleep(10 * time.Second)
-		return DownloadVoiceFile(url, path, resonator, lang, title)
+		return DownloadVoiceFile(url, path, resonator, lang, title, wikiMode)
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to download: %s (%d)", url, resp.StatusCode)
 	}
 
-	out, err := os.Create(path + "/" + composeVoiceFileName(resonator, lang, title))
+	out, err := os.Create(path + "/" + composeVoiceFileName(resonator, lang, title, wikiMode))
 	if err != nil {
 		return err
 	}

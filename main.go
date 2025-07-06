@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	wikiMode     bool
 	resonator    string
 	jsonFileName string
 	languages    = map[string]bool{
@@ -34,14 +35,18 @@ func main() {
 
 		currPath := "voices/" + resonator + "/" + lang
 		utils.CreateDir(currPath)
-		log.Printf("Processing %s pack\n", strings.ToUpper(lang))
+		if wikiMode {
+			log.Printf("Processing %s pack with WIKI mode on\n", strings.ToUpper(lang))
+		} else {
+			log.Printf("Processing %s pack\n", strings.ToUpper(lang))
+		}
 
 		for _, words := range jsonData["Words"].([]any) {
 			wordMap := words.(map[string]any)
 
 			title := wordMap["Title"].(string)
 			voiceURL := wordMap["Voice"+lang].(string)
-			err := utils.DownloadVoiceFile(voiceURL, currPath, resonator, lang, title)
+			err := utils.DownloadVoiceFile(voiceURL, currPath, resonator, lang, title, wikiMode)
 			if err != nil {
 				log.Println("Error:", err)
 			} else {
@@ -56,24 +61,27 @@ func main() {
 }
 
 func startInteractiveInput() {
-	fmt.Print("Enter the JSON file name (without extension): ")
-	fmt.Scanln(&jsonFileName)
-
 	var userChoice string
 	var isDownloadAll bool
+
+	fmt.Print("Enter the JSON file name (without extension): ")
+	fmt.Scanln(&jsonFileName)
+	utils.HandleEmptyInput(jsonFileName)
+
+	fmt.Println("Turn WIKI mode on? (y/n)")
+	fmt.Print("By turning on this mode, certain files will be renamed to adjust Fandom WIKI format: ")
+	fmt.Scanln(&userChoice)
+	utils.HandleEmptyInput(userChoice)
+	utils.HandleYesNoInput(userChoice, &wikiMode)
+
 	fmt.Print("Do you want to download all voices from all languages? (y/n): ")
 	fmt.Scanln(&userChoice)
-	if strings.ToLower(userChoice) == "y" || strings.ToLower(userChoice) == "yes" {
-		isDownloadAll = true
+	utils.HandleEmptyInput(userChoice)
+	utils.HandleYesNoInput(userChoice, &isDownloadAll)
+	if isDownloadAll {
 		for lang := range languages {
 			languages[lang] = true
 		}
-	} else if strings.ToLower(userChoice) == "n" || strings.ToLower(userChoice) == "no" {
-		isDownloadAll = false
-	} else {
-		log.Fatal("Invalid input. Please enter 'y' or 'n'.")
-	}
-	if isDownloadAll {
 		return
 	}
 
