@@ -27,6 +27,32 @@ var (
 		'D': 500,
 		'M': 1000,
 	}
+	soleTitles = []string{
+		"Echo Summon",
+		"Echo Transform",
+		"Intro & Outro Skills",
+		"Enemies Near",
+		"Glider",
+		"Grapple",
+		"Sensor",
+		"Wall Dash",
+		"Dash",
+	}
+	nonSoleTitles = []string{
+		"Aerial Attack:",
+		"Basic Attack:",
+		"Heavy Attack:",
+		"Resonance Skill:",
+		"Resonance Liberation:",
+		"Intro & Outro Skills:",
+		"Hit:",
+		"Injured:",
+		"Fallen:",
+		"Supply Chest:",
+		"Echo Summon:",
+		"Echo Transform:",
+		"Enemies Near:",
+	}
 )
 
 // Convert roman numerals into decimal integer
@@ -106,38 +132,14 @@ func handleCombatTitle(title string) string {
 		title = strings.ReplaceAll(title, "Intro Skill:", "Intro & Outro Skills:")
 	}
 
-	soleTitles := []string{
-		"Echo Summon",
-		"Echo Transform",
-		"Intro & Outro Skills",
-		"Enemies Near",
-		"Glider",
-		"Grapple",
-		"Sensor",
-		"Wall Dash",
-		"Dash",
-	}
+	// Check for sole title first
 	for _, t := range soleTitles {
 		if strings.EqualFold(title, t) {
 			return title + " 01"
 		}
 	}
 
-	nonSoleTitles := []string{
-		"Aerial Attack:",
-		"Basic Attack:",
-		"Heavy Attack:",
-		"Resonance Skill:",
-		"Resonance Liberation:",
-		"Intro & Outro Skills:",
-		"Hit:",
-		"Injured:",
-		"Fallen:",
-		"Supply Chest:",
-		"Echo Summon:",
-		"Echo Transform:",
-		"Enemies Near:",
-	}
+	// Handle non-sole title with roman numerals
 	pattern := regexp.MustCompile(`(.+:\s)([IVXLCDM]+)$`)
 	for _, t := range nonSoleTitles {
 		if strings.Contains(title, t) {
