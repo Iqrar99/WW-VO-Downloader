@@ -1,15 +1,15 @@
-## 📄 Additional Info
+# 📄 Additional Info
 
 Make sure the `.json` file is named after the **character** (or "Resonator") — for example:
 `ciaccona.json` instead of `1607.json`.
 
-### Why is this important?
+## Why is this important?
 
 When you run the program, it will ask you to enter the character name. This name is then used to generate meaningful filenames for the audio files. Naming the JSON after the character ensures everything lines up and stays human-readable — much better than dealing with numeric IDs!
 
 ---
 
-## 🧾 Expected JSON Structure
+# 🧾 Expected JSON Structure
 
 Here’s a simplified look at the structure your `.json` file should follow:
 
@@ -35,7 +35,7 @@ Here’s a simplified look at the structure your `.json` file should follow:
 }
 ```
 
-### 🎯 What This Program Actually Uses
+## 🎯 What This Program Actually Uses
 
 From the full JSON, the downloader only uses these specific fields:
 
