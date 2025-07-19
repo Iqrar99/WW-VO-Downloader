@@ -11,6 +11,7 @@ import (
 
 var (
 	wikiMode     bool
+	autoConvert  bool
 	resonator    string
 	jsonFileName string
 	languages    = map[string]bool{
@@ -56,8 +57,23 @@ func main() {
 			// Wait to avoid rate limits
 			time.Sleep(2 * time.Second)
 		}
+
+		log.Printf(
+			"All %s voice files have downloaded successfully.",
+			strings.ToUpper(lang),
+		)
+
+		if autoConvert {
+			log.Printf(
+				"Processing %s voice files for conversion to OGG format...",
+				strings.ToUpper(lang),
+			)
+			utils.ConvertVoiceFiles(currPath)
+			log.Println("Conversion completed successfully.")
+		}
 	}
-	log.Println("All voice files downloaded successfully.")
+	log.Println("All voice files have processed thoroughly.")
+	time.Sleep(5 * time.Second)
 }
 
 func startInteractiveInput() {
@@ -68,11 +84,15 @@ func startInteractiveInput() {
 	fmt.Scanln(&jsonFileName)
 	utils.HandleEmptyInput(jsonFileName)
 
+	utils.PrintSeparator()
+
 	fmt.Println("Turn WIKI mode on? (y/n)")
 	fmt.Print("By turning on this mode, certain files will be renamed to adjust Fandom WIKI format: ")
 	fmt.Scanln(&userChoice)
 	utils.HandleEmptyInput(userChoice)
 	utils.HandleYesNoInput(userChoice, &wikiMode)
+
+	utils.PrintSeparator()
 
 	fmt.Print("Do you want to download all voices from all languages? (y/n): ")
 	fmt.Scanln(&userChoice)
@@ -84,6 +104,8 @@ func startInteractiveInput() {
 		}
 		return
 	}
+
+	utils.PrintSeparator()
 
 	fmt.Print("Which language pack you want to download? (EN, JA, KO, ZH): ")
 	fmt.Scanln(&userChoice)
@@ -99,4 +121,17 @@ func startInteractiveInput() {
 	default:
 		log.Fatal("Invalid language choice. Please enter EN, JA, KO, or ZH.")
 	}
+
+	utils.PrintSeparator()
+
+	fmt.Println("Turn on Automatic Conversion? (y/n)")
+	fmt.Print("By turning on this mode, files will be converted from mp3 to ogg: ")
+	fmt.Scanln(&userChoice)
+	utils.HandleEmptyInput(userChoice)
+	utils.HandleYesNoInput(userChoice, &autoConvert)
+	if autoConvert {
+		utils.CheckFFmpegExists()
+	}
+
+	utils.PrintSeparator()
 }

@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -53,7 +55,16 @@ var (
 		"Echo Transform:",
 		"Enemies Near:",
 	}
+	ffmpegPath string
 )
+
+func init() {
+	if runtime.GOOS == "windows" {
+		ffmpegPath = "./engine/ffmpeg.exe"
+	} else {
+		ffmpegPath = "./engine/ffmpeg"
+	}
+}
 
 // Convert roman numerals into decimal integer
 func romanToInt(s string) int {
@@ -148,20 +159,41 @@ func DownloadVoiceFile(url, path, resonator, lang, title string, wikiMode bool) 
 }
 
 // Checks if the ffmpeg program exists based on OS
-func CheckFFmpegExists() error {
-	var ffmpegPath string
-	if runtime.GOOS == "windows" {
-		ffmpegPath = "./engine/ffmpeg.exe"
-	} else {
-		ffmpegPath = "./engine/ffmpeg"
-	}
+func CheckFFmpegExists() {
 	_, err := os.Stat(ffmpegPath)
 	if os.IsNotExist(err) {
-		return fmt.Errorf(
+		log.Fatal(
 			"FFmpeg program not found in ./engine directory. " +
 				"Consider downloading it from https://ffmpeg.org/download.html " +
-				"and placing it in the engine directory",
+				"and placing it in the engine directory.",
 		)
 	}
-	return err
+}
+
+func ConvertVoiceFiles(path string) {
+	var inputFile string
+	var outputFile string
+	var cmd *exec.Cmd
+
+	entries, _ := os.ReadDir(path)
+	for _, entry := range entries {
+		inputFile = filepath.Join(path, entry.Name())
+		outputFile = strings.ReplaceAll(inputFile, ".mp3", ".ogg")
+
+		cmd = exec.Command(
+			ffmpegPath,
+			"-y",
+			"-i", inputFile,
+			"-c:a", "libvorbis",
+			outputFile,
+		)
+		err := cmd.Run()
+		if err != nil {
+			log.Printf("Error converting %s: %v", inputFile, err)
+			continue
+		}
+		os.Remove(inputFile)
+
+		log.Println("Converted to OGG:", entry.Name()[:len(entry.Name())-4])
+	}
 }

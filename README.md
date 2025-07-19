@@ -7,6 +7,7 @@ A simple and lightweight Go-based tool to automatically download character voice
 ## 🚀 Features
 
 * 📁 Downloads voice files from Encore.moe in `.mp3` format
+* 🔃 Convert the voice files from `.mp3` to `.ogg` automatically (This is optional)
 * 🛠️ Lightweight and written in pure Go
 * 🚧 Built-in rate limiting to avoid HTTP 429 (Too Many Requests) errors
 * 🎓 Great for learning or contributing to fan-driven projects
@@ -64,7 +65,11 @@ You can download the executable program [here](https://github.com/Iqrar99/WW-VO-
 
 If you're contributing to the [Wuthering Waves Fandom Wiki](https://wutheringwaves.fandom.com/wiki/), you’ll need to convert the `.mp3` files to `.ogg` format before uploading.
 
-I recommend using [AscensionGameDev's Batch MP3 to OGG Converter](https://github.com/AscensionGameDev/Batch-MP3-to-OGG-Converter) for fast and easy batch conversion.
+There are 2 ways to do that:
+
+1. Download the ffmpeg static build from [official website](https://ffmpeg.org/download.html) then extract and put the file in `./engine` dir. Read the [engine/README.md](./engine/README.md) file for more info. After that, turn on the automatic conversion during program start. Or,
+
+2. Use [AscensionGameDev's Batch MP3 to OGG Converter](https://github.com/AscensionGameDev/Batch-MP3-to-OGG-Converter) for fast and easy batch conversion. This is needed if you turn off the automatic conversion.
 
 ---
 
