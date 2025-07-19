@@ -7,7 +7,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"regexp"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -53,7 +55,16 @@ var (
 		"Echo Transform:",
 		"Enemies Near:",
 	}
+	ffmpegPath string
 )
+
+func init() {
+	if runtime.GOOS == "windows" {
+		ffmpegPath = "./engine/ffmpeg.exe"
+	} else {
+		ffmpegPath = "./engine/ffmpeg"
+	}
+}
 
 // Convert roman numerals into decimal integer
 func romanToInt(s string) int {
@@ -70,6 +81,10 @@ func romanToInt(s string) int {
 	}
 
 	return total
+}
+
+func PrintSeparator() {
+	fmt.Println(strings.Repeat("-", 50))
 }
 
 func ReadJsonFile(jsonFileName string) any {
@@ -93,81 +108,6 @@ func CreateDir(path string) {
 	err := os.MkdirAll(path, 0755)
 	if err != nil {
 		log.Fatalf("Error creating %s directory: %v", path, err)
-	}
-}
-
-// Voice filename is following Fandom WIKI filename format
-func composeVoiceFileName(resonator, lang, title string, wikiMode bool) string {
-	title = handleTitle(title, wikiMode)
-
-	var fileName string
-	if lang == "En" {
-		fileName = fmt.Sprintf("%s %s", resonator, title)
-	} else {
-		fileName = fmt.Sprintf("%s %s %s", resonator, strings.ToUpper(lang), title)
-	}
-	fileName = strings.ReplaceAll(fileName, ":", "")
-	fileName = strings.ReplaceAll(fileName, " ", "_")
-
-	return fileName + ".mp3"
-}
-
-// Handle specific title formats
-func handleTitle(title string, wikiMode bool) string {
-	if strings.Contains(title, "'s Hobby") {
-		return "Hobby"
-	}
-	if strings.Contains(title, "'s Trouble") {
-		return "Trouble"
-	}
-	if wikiMode {
-		title = handleCombatTitle(title)
-	}
-	return title
-}
-
-func handleCombatTitle(title string) string {
-	// Handle very special case
-	if strings.Contains(title, "Intro Skill:") {
-		title = strings.ReplaceAll(title, "Intro Skill:", "Intro & Outro Skills:")
-	}
-
-	// Check for sole title first
-	for _, t := range soleTitles {
-		if strings.EqualFold(title, t) {
-			return title + " 01"
-		}
-	}
-
-	// Handle non-sole title with roman numerals
-	pattern := regexp.MustCompile(`(.+:\s)([IVXLCDM]+)$`)
-	for _, t := range nonSoleTitles {
-		if strings.Contains(title, t) {
-			return pattern.ReplaceAllStringFunc(title, func(s string) string {
-				matches := pattern.FindStringSubmatch(s)
-				prefix := matches[1]
-				num := romanToInt(matches[2])
-				return prefix + fmt.Sprintf("%02d", num)
-			})
-		}
-	}
-
-	return title
-}
-
-func HandleEmptyInput(input string) {
-	if input == "" {
-		log.Fatal("input can't be empty")
-	}
-}
-
-func HandleYesNoInput(input string, target *bool) {
-	if strings.ToLower(input) == "y" || strings.ToLower(input) == "yes" {
-		*target = true
-	} else if strings.ToLower(input) == "n" || strings.ToLower(input) == "no" {
-		*target = false
-	} else {
-		log.Fatal("Invalid input. Please enter 'y' or 'n'.")
 	}
 }
 
@@ -216,4 +156,44 @@ func DownloadVoiceFile(url, path, resonator, lang, title string, wikiMode bool) 
 
 	_, err = io.Copy(out, resp.Body)
 	return err
+}
+
+// Checks if the ffmpeg program exists based on OS
+func CheckFFmpegExists() {
+	_, err := os.Stat(ffmpegPath)
+	if os.IsNotExist(err) {
+		log.Fatal(
+			"FFmpeg program not found in ./engine directory. " +
+				"Consider downloading it from https://ffmpeg.org/download.html " +
+				"and placing it in the engine directory.",
+		)
+	}
+}
+
+func ConvertVoiceFiles(path string) {
+	var inputFile string
+	var outputFile string
+	var cmd *exec.Cmd
+
+	entries, _ := os.ReadDir(path)
+	for _, entry := range entries {
+		inputFile = filepath.Join(path, entry.Name())
+		outputFile = strings.ReplaceAll(inputFile, ".mp3", ".ogg")
+
+		cmd = exec.Command(
+			ffmpegPath,
+			"-y",
+			"-i", inputFile,
+			"-c:a", "libvorbis",
+			outputFile,
+		)
+		err := cmd.Run()
+		if err != nil {
+			log.Printf("Error converting %s: %v", inputFile, err)
+			continue
+		}
+		os.Remove(inputFile)
+
+		log.Println("Converted to OGG:", entry.Name()[:len(entry.Name())-4])
+	}
 }
