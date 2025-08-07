@@ -3,23 +3,15 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
-
-	fakeUA "github.com/lib4u/fake-useragent"
 )
 
 var (
-	client = &http.Client{
-		Timeout: 30 * time.Second,
-	}
 	roman = map[byte]int{
 		'I': 1,
 		'V': 5,
@@ -55,7 +47,8 @@ var (
 		"Echo Transform:",
 		"Enemies Near:",
 	}
-	ffmpegPath string
+	ffmpegPath    string
+	CharacterData map[string]string
 )
 
 func init() {
@@ -63,6 +56,14 @@ func init() {
 		ffmpegPath = "./engine/ffmpeg.exe"
 	} else {
 		ffmpegPath = "./engine/ffmpeg"
+	}
+
+	rawData := ReadJsonFile("data/", "character.json")
+	CharacterData = make(map[string]string)
+	for name, v := range rawData {
+		if idVal, ok := v.(map[string]any)["id"].(string); ok {
+			CharacterData[name] = idVal
+		}
 	}
 }
 
@@ -87,15 +88,14 @@ func PrintSeparator() {
 	fmt.Println(strings.Repeat("-", 50))
 }
 
-func ReadJsonFile(jsonFileName string) any {
-	jsonFile, err := os.Open("json/" + jsonFileName)
+func ReadJsonFile(path, jsonFileName string) map[string]any {
+	jsonFile, err := os.Open(path + jsonFileName)
 	if err != nil {
 		log.Fatal("Error opening JSON file:", err)
 	}
-	log.Println("JSON file opened successfully:", jsonFileName)
 	defer jsonFile.Close()
 
-	var data any
+	var data map[string]any
 	err = json.NewDecoder(jsonFile).Decode(&data)
 	if err != nil {
 		log.Fatal("Error decoding JSON file:", err)
@@ -109,53 +109,6 @@ func CreateDir(path string) {
 	if err != nil {
 		log.Fatalf("Error creating %s directory: %v", path, err)
 	}
-}
-
-func DownloadVoiceFile(url, path, resonator, lang, title string, wikiMode bool) error {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return err
-	}
-
-	ua, err := fakeUA.New()
-	if err != nil {
-		return err
-	}
-
-	// Add headers to look like a real browser
-	req.Header.Set("User-Agent", ua.GetRandom())
-	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
-	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
-	req.Header.Set("Accept-Encoding", "gzip, deflate, br")
-	req.Header.Set("Connection", "keep-alive")
-	req.Header.Set("Referer", "https://www.google.com/")
-	req.Header.Set("Upgrade-Insecure-Requests", "1")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Handle rate limiting (429)
-	if resp.StatusCode == http.StatusTooManyRequests {
-		log.Println("Rate limited. Waiting before retry...")
-		time.Sleep(10 * time.Second)
-		return DownloadVoiceFile(url, path, resonator, lang, title, wikiMode)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to download: %s (%d)", url, resp.StatusCode)
-	}
-
-	out, err := os.Create(path + "/" + composeVoiceFileName(resonator, lang, title, wikiMode))
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, resp.Body)
-	return err
 }
 
 // Checks if the ffmpeg program exists based on OS

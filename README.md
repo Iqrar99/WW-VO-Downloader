@@ -25,24 +25,7 @@ git clone https://github.com/Iqrar99/WW-VO-Downloader.git
 cd WW-VO-Downloader
 ```
 
-### 1. Find the Character
-
-* Visit the [Encore.moe character list](https://encore.moe/character).
-* Click on a character you’re interested in.
-* Take note of the numeric ID from the URL.
-
-  * *Example:* Camellya’s page is `https://encore.moe/character/1603`, so the ID is `1603`.
-
-### 2. Download the JSON File
-
-* Use the API endpoint:
-  `https://api.encore.moe/en/character/<id>.json`
-  Replace `<id>` with the actual character ID.
-* Save the file in the `json/` directory.
-* Rename it to something meaningful, like:
-  `1603.json → camellya.json`
-
-### 3. Run the Program
+### Run the Program
 
 Make sure you have the latest version of [Go](https://go.dev/doc/install) installed.
 
@@ -53,7 +36,7 @@ go mod tidy
 go run main.go
 ```
 
-You will be asked which `.json` file you want to use. Just submit and wait for the program finished. Voice lines will be downloaded into the `voices/` directory.
+You will be asked which character voice you want to download. Just submit and wait for the program finished. Voice lines will be downloaded into the `voices/` directory.
 
 #### 💡 FOR NON DEVELOPER USER 💡
 
