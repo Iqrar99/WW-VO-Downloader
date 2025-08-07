@@ -10,11 +10,11 @@ import (
 )
 
 var (
-	wikiMode     bool
-	autoConvert  bool
-	resonator    string
-	jsonFileName string
-	languages    = map[string]bool{
+	wikiMode      bool
+	autoConvert   bool
+	resonator     string
+	characterName string
+	languages     = map[string]bool{
 		"En": false,
 		"Ja": false,
 		"Ko": false,
@@ -25,15 +25,13 @@ var (
 func main() {
 	startInteractiveInput()
 
-	jsonFileName = strings.ToLower(jsonFileName)
-	resonator = strings.ToUpper(jsonFileName[:1]) + jsonFileName[1:]
-
-	jsonData := utils.ReadJsonFile(jsonFileName + ".json").(map[string]any)
+	jsonData := utils.ReadJsonFile("json/", characterName+".json")
 	for lang := range languages {
 		if !languages[lang] {
 			continue
 		}
 
+		resonator = characterName
 		currPath := "voices/" + resonator + "/" + lang
 		utils.CreateDir(currPath)
 		if wikiMode {
@@ -72,7 +70,7 @@ func main() {
 			log.Println("Conversion completed successfully.")
 		}
 	}
-	log.Println("All voice files have processed thoroughly.")
+	log.Println("All voice files have processed completely.")
 	time.Sleep(5 * time.Second)
 }
 
@@ -80,9 +78,11 @@ func startInteractiveInput() {
 	var userChoice string
 	var isDownloadAll bool
 
-	fmt.Print("Enter the JSON file name (without extension): ")
-	fmt.Scanln(&jsonFileName)
-	utils.HandleEmptyInput(jsonFileName)
+	fmt.Print("Enter the character name: ")
+	fmt.Scanln(&characterName)
+	utils.HandleEmptyInput(characterName)
+	utils.HandleCharacterInput(&characterName)
+	utils.DownloadCharacterData(characterName)
 
 	utils.PrintSeparator()
 
